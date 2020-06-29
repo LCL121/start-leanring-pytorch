@@ -39,7 +39,7 @@ print(c)
 print(c.expand(1, 2, 1, 3).numel())
 print(c.expand(-1, 2, 2, -1).shape)
 print(c.repeat(1, 1, 1, 3).numel())
-# ??? 为什么 expand 和 repeat 的 numel 一样
+# 但是expand 和 repeat 的numel一样
 
 
 # 4

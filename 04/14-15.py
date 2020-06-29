@@ -43,7 +43,7 @@ print(h, h.shape, h.dim())
 print(type(h.shape), type(list(h.shape)))  # 使用list函数直接将 torch.Size类型 ===> list类型
 
 # other
-print(h.numel())  # 内存大小 2 * 3 * 4 = 24
+print(h.numel())  # Returns the total number of elements in the input tensor. 2 * 3 * 4 = 24
 
 
 
