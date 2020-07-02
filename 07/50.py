@@ -62,7 +62,7 @@ for epoch in range(epochs):
         if batch_idx % 100 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader.dataset), loss.item()
+                100. * len(data) * batch_idx / len(train_loader.dataset), loss.item()
             ))
     test_loss = 0
     correct = 0

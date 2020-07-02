@@ -3,32 +3,35 @@ import torch.optim as optim
 import torch.nn as nn
 import torchvision
 import time
-from visdom import Visdom
 
 
-viz = Visdom()
 start_time = time.time()
 batch_size = 200
 learning_rate = 0.01
 epochs = 10
 
-train_loader = torch.utils.data.DataLoader(
-    torchvision.datasets.MNIST('../dataset', train=True, download=True,
-                               transform=torchvision.transforms.Compose([
-                                   torchvision.transforms.ToTensor(),
-                                   torchvision.transforms.Normalize(
-                                       (0.1307,), (0.3081,))
-                               ])),
-    batch_size=batch_size, shuffle=True)
 
-test_loader = torch.utils.data.DataLoader(
-    torchvision.datasets.MNIST('../dataset', train=False, download=True,
+train_db = torchvision.datasets.MNIST('../dataset', train=True, download=True,
                                transform=torchvision.transforms.Compose([
                                    torchvision.transforms.ToTensor(),
                                    torchvision.transforms.Normalize(
                                        (0.1307,), (0.3081,))
-                               ])),
-    batch_size=batch_size, shuffle=True)
+                               ]))
+test_db = torchvision.datasets.MNIST('../dataset', train=False, download=True,
+                               transform=torchvision.transforms.Compose([
+                                   torchvision.transforms.ToTensor(),
+                                   torchvision.transforms.Normalize(
+                                       (0.1307,), (0.3081,))
+                               ]))
+print('train: ', len(train_db), 'test: ', len(test_db))
+train_db, val_db = torch.utils.data.random_split(train_db, [50000, 10000])
+print('db1: ', len(train_db), 'db2: ', len(val_db))
+
+
+train_loader = torch.utils.data.DataLoader(train_db, batch_size=batch_size, shuffle=True)
+val_loader = torch.utils.data.DataLoader(val_db, batch_size=batch_size, shuffle=True)
+test_loader = torch.utils.data.DataLoader(test_db, batch_size=batch_size, shuffle=True)
+
 
 class MLP(nn.Module):
     def __init__(self):
@@ -64,24 +67,38 @@ for epoch in range(epochs):
         if batch_idx % 100 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * len(data) * batch_idx / len(train_loader.dataset), loss.item()
+                (len(data) * batch_idx / len(train_loader.dataset) * 100.), loss.item()
             ))
     test_loss = 0
     correct = 0
-    for data, target in test_loader:
+    for data, target in val_loader:
         data = data.view(-1, 28*28)
         data, target = data.to(device), target.to(device)
         logits = net(data)
         test_loss += criteon(logits, target).item()
         pred = logits.data.max(1)[1]
         correct += pred.eq(target.data).sum()
-        viz.images(data.view(-1, 1, 28, 28), win='try_image')
-        viz.text(str(pred.detach().cpu().numpy()), win='pred', opts=dict(title='pred'))
-    test_loss /= len(test_loader.dataset)
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.6f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)
+    test_loss /= len(val_loader.dataset)
+    print('\nVAL set: Average loss: {:.4f}, Accuracy: {}/{} ({:.6f}%)\n'.format(
+        test_loss, correct, len(val_loader.dataset),
+        100. * correct / len(val_loader.dataset)
     ))
+
+
+test_loss = 0
+correct = 0
+for data, target in test_loader:
+    data = data.view(-1, 28*28)
+    data, target = data.to(device), target.to(device)
+    logits = net(data)
+    test_loss += criteon(logits, target).item()
+    pred = logits.data.max(1)[1]
+    correct += pred.eq(target.data).sum()
+test_loss /= len(test_loader.dataset)
+print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.6f}%)\n'.format(
+    test_loss, correct, len(test_loader.dataset),
+    100. * correct / len(test_loader.dataset)
+))
 
 
 end_time = time.time()
