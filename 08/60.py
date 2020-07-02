@@ -38,8 +38,10 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(784, 200),
+            nn.Dropout(0.5),
             nn.LeakyReLU(inplace=True),
             nn.Linear(200, 200),
+            nn.Dropout(0.5),
             nn.LeakyReLU(inplace=True),
             nn.Linear(200, 10),
             nn.LeakyReLU(inplace=True)
@@ -52,10 +54,14 @@ class MLP(nn.Module):
 
 device = torch.device('cuda')
 net = MLP().to(device)
-optimizer = optim.SGD(net.parameters(), lr=learning_rate)
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, weight_decay=0.01, momentum=0.78)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=4)
 criteon = nn.CrossEntropyLoss().to(device)
 
+
 for epoch in range(epochs):
+    # train 的时候，可以dropout
+    net.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data = data.view(-1, 28*28)
         data, target = data.to(device), target.to(device)
@@ -69,22 +75,24 @@ for epoch in range(epochs):
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 (len(data) * batch_idx / len(train_loader.dataset) * 100.), loss.item()
             ))
-    test_loss = 0
+    val_loss = 0
     correct = 0
     for data, target in val_loader:
         data = data.view(-1, 28*28)
         data, target = data.to(device), target.to(device)
         logits = net(data)
-        test_loss += criteon(logits, target).item()
+        val_loss += criteon(logits, target).item()
         pred = logits.data.max(1)[1]
         correct += pred.eq(target.data).sum()
-    test_loss /= len(val_loader.dataset)
+    val_loss /= len(val_loader.dataset)
+    scheduler.step(val_loss)
     print('\nVAL set: Average loss: {:.4f}, Accuracy: {}/{} ({:.6f}%)\n'.format(
-        test_loss, correct, len(val_loader.dataset),
+        val_loss, correct, len(val_loader.dataset),
         100. * correct / len(val_loader.dataset)
     ))
 
-
+# 在 test 的时候，要把dropout去掉
+net.eval()
 test_loss = 0
 correct = 0
 for data, target in test_loader:
