@@ -35,3 +35,45 @@
 3. robust
 4. stable
 5. larger learning rate
+
+# nn.Module
+
+![](./img/4.png)
+
+## [【PyTorch】torch.nn.Module 源码分析](https://zhuanlan.zhihu.com/p/88712978)
+
+## 优势
+
+1. embed current layers
+    - inear
+    - ReLU
+    - Sigmoid
+    - Conv2d
+    - ConvTransposed2d
+    - Dropout
+    - etc.
+2. Container
+    - net(x)
+    - nn.Sequential() 里面只能写类
+3. parameters
+4. modules
+5. to(device)
+    - 对于tensor使用to之前和之后是不一样的，对于一个Module来说之前和之后是一样的
+6. save and load
+    - save ==> torch.save(net.state_dict(), 'ckpt.mdl')
+    - load ==> net.load_state_dict(torch.load('ckpt.mdl'))
+7. train and test
+    - train ==> net.train()
+    - test ==> net.eval()
+8. implement own layer
+
+# 数据增强 ==> 对原来的数据进行多样化变换的处理，以获得big data
+
+data argumentation will help, but not too much
+
+1. Flip（翻转）
+2. Rotate（旋转）
+3. Scale
+4. Random Move & Crop
+5. Noise
+6. GAN
